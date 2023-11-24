@@ -18,6 +18,8 @@
 #include "bitmapclass.h"
 #include "textclass.h"
 #include "skymapclass.h"
+#include "Refractionshaderclass.h"
+#include "Watershaderclass.h"
 
 /////////////
 // GLOBALS //
@@ -54,7 +56,8 @@ private:
 private:
 	D3DClass* m_D3D;
 	CameraClass* m_Camera;
-	ModelClass * m_Model_bilboard, * m_Model_plane, *m_Bizon, *m_Giraf, *m_DeerA;//m_tree ,*m_fox 뺌*m_Wolf
+	ModelClass * m_Model_bilboard, * m_Model_plane, *m_Chess, *m_Giraf, *m_dolphin, *m_WaterModel;//m_tree ,*m_fox 뺌*m_Wolf
+
 	
 	
 	LightShaderClass* m_LightShader;
@@ -63,6 +66,15 @@ private:
 	TextureShaderClass* m_TextureShader;
 	BitmapClass *m_Title;
 	Skymapclass *m_Skymap;
+
+	//물 반사 및 물 쉐이더
+	RefractionShaderClass* m_RefractionShader;
+	WaterShaderClass* m_WaterShader;
+
+
+	//물의 높이와 위치
+	float m_waterHeight, m_waterTranslation;
+
 
 
 

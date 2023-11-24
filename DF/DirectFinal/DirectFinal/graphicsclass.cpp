@@ -13,9 +13,9 @@ GraphicsClass::GraphicsClass()
 	m_Model_bilboard = 0;
 	m_Model_plane = 0;
 	//m_Fox = 0;
-	m_Bizon = 0;
+	m_Chess = 0;
 	/*m_Wolf = 0;*/
-	m_DeerA = 0;
+	m_dolphin = 0;
 	m_Giraf = 0;
 	m_Skymap = 0;
 	
@@ -77,9 +77,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Model_plane = new ModelClass;
 	//m_Tree = new ModelClass;
 	//m_Fox = new ModelClass;
-	m_Bizon = new ModelClass;
+	m_Chess = new ModelClass;
 	/*m_Wolf = new ModelClass;*/
-	m_DeerA = new ModelClass;
+	m_dolphin = new ModelClass;
 	/*m_Giraf = new ModelClass;*/
 
 	if (!m_Model_bilboard)
@@ -93,8 +93,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	/*m_Tree->Initialize(m_D3D->GetDevice(), L"./data/tree.obj", L"./data/Spooky1Twig_Diffuse4.dds");*/
 	//m_Fox->Initialize(m_D3D->GetDevice(), L"./data/fox.obj", L"./data/01foxtexture.dds");
 	//m_Wolf->Initialize(m_D3D->GetDevice(), L"./data/Wolf.obj", L"./data/25dogtexture.dds");
-	m_Bizon->Initialize(m_D3D->GetDevice(), L"./data/chess.obj", L"./data/04bizontexture.dds");
-	m_DeerA->Initialize(m_D3D->GetDevice(), L"./data/dolphin.obj", L"./data/dolphin.dds");
+	m_Chess->Initialize(m_D3D->GetDevice(), L"./data/chess.obj", L"./data/04bizontexture.dds");
+	m_dolphin->Initialize(m_D3D->GetDevice(), L"./data/dolphin.obj", L"./data/dolphin.dds");
 	//m_Giraf->Initialize(m_D3D->GetDevice(), L"./data/giraf.obj", L"./data/18giraftexture.dds");
 
 
@@ -400,7 +400,7 @@ bool GraphicsClass::Frame(int fps, int cpu, int mouseX, int mouseY, bool Main)
 		return false;
 	}
 
-	faceCount = m_Model_bilboard->GetFaceCount() + m_Model_plane->GetFaceCount() + m_Bizon->GetFaceCount() + m_DeerA->GetFaceCount();//m_Tree disable fox+ /m_Giraf->GetFaceCount()
+	faceCount = m_Model_bilboard->GetFaceCount() + m_Model_plane->GetFaceCount() + m_Chess->GetFaceCount() + m_dolphin->GetFaceCount();//m_Tree disable fox+ /m_Giraf->GetFaceCount()
 	
 	// Set the location of the mouse.
 	result = m_Text->SetMousePosition(mouseX, mouseY, faceCount, m_D3D->GetDeviceContext());
@@ -595,12 +595,12 @@ bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,floa
 
 	worldMatrix = XMMatrixScaling(2.2f, 2.2f, 2.2f) * XMMatrixRotationY(-90.0f * ((float)XM_PI / 180.0f)) * XMMatrixTranslation(0.0f, ypos_d + -3.0f, -45.0f) * XMMatrixRotationY(-rotation);
 
-	m_DeerA->Render(m_D3D->GetDeviceContext());
+	m_dolphin->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_DeerA->GetIndexCount(), 1,
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_dolphin->GetIndexCount(), 1,
 		worldMatrix, viewMatrix, projectionMatrix,
-		m_DeerA->GetTexture(),
+		m_dolphin->GetTexture(),
 		m_Light->GetDirection(), m_Light->GetAmbientColor(), diffuseColor_A, lightPosition,
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 
@@ -629,12 +629,12 @@ bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,floa
 
 	worldMatrix = XMMatrixScaling(2.5f, 2.5f, 2.5f) * XMMatrixRotationY(-130.0f * ((float)XM_PI / 180.0f)) * XMMatrixTranslation(7.0f, 2.0f, 0.0f);
 
-	m_Bizon->Render(m_D3D->GetDeviceContext());
+	m_Chess->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Bizon->GetIndexCount(), 1,
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Chess->GetIndexCount(), 1,
 		worldMatrix, viewMatrix, projectionMatrix,
-		m_Bizon->GetTexture(),
+		m_Chess->GetTexture(),
 		m_Light->GetDirection(), m_Light->GetAmbientColor(), diffuseColor_A, lightPosition,
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 
