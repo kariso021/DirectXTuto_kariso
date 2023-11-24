@@ -570,7 +570,182 @@ bool GraphicsClass::Frame(int fps, int cpu, int mouseX, int mouseY, bool Main)
 
 bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,float xpos_f,float ypos_d)
 {
+	bool result;
+
+	result = RenderRefractionToTexture();
+	if (!result)
+	{
+		return false;
+	}
+
+	// Render the reflection of the scene to a texture.
+	result = RenderReflectionToTexture();
+	if (!result)
+	{
+		return false;
+	}
+
+	//Scene
+
+	result = RenderScene(rotation, rotation_f, rotation_g, xpos_f, ypos_d);
+
+	//skybox 
+
+	result = SkymapRender();
+
+
+	
+	m_D3D->EndScene();
+
+	return true;
+}
+
+bool GraphicsClass::TitleRender()
+{
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
+	bool result;
+	
+
+	// Clear the buffers to begin the scene.
+	m_D3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Generate the view matrix based on the camera's position.
+	m_Camera->Render();
+
+	// Get the world, view, and projection matrices from the camera and d3d objects.
+	m_Camera->GetViewMatrix(viewMatrix);
+	m_D3D->GetWorldMatrix(worldMatrix);
+	m_D3D->GetProjectionMatrix(projectionMatrix);
+
+	m_D3D->GetOrthoMatrix(orthoMatrix);
+
+	// Turn off the Z buffer to begin all 2D rendering.
+	m_D3D->TurnZBufferOff();
+
+	// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	result = m_Title->Render(m_D3D->GetDeviceContext(), 0, 0);
+	if (!result)
+	{
+		return false;
+	}
+	viewMatrix = m_baseViewMatrix;
+	//수정된 부분
+	result = m_TextureShader->Render(m_D3D->GetDeviceContext(), m_Title->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Title->GetTexture());
+	if (!result)
+	{
+		return false;
+	}
+	// Render the bitmap with the texture shader.
+	 
+	// Present the rendered scene to the screen.
+	m_D3D->EndScene();
+
+	return true;
+}
+
+bool GraphicsClass::RenderRefractionToTexture()
+{
+	XMFLOAT4 clipPlane;
+	XMMATRIX viewMatrix, projectionMatrix, worldMatrix;
+	bool result;
+
+	// Setup a clipping plane based on the height of the water to clip everything above it.
+	clipPlane = XMFLOAT4(0.0f, -1.0f, 0.0f, m_waterHeight + 0.1f);
+
+	// Set the render target to be the refraction render to texture.
+	m_RefractionTexture->SetRenderTarget(m_D3D->GetDeviceContext(), m_D3D->GetDepthStencilView());
+
+	// Clear the refraction render to texture.
+	m_RefractionTexture->ClearRenderTarget(m_D3D->GetDeviceContext(), m_D3D->GetDepthStencilView(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Generate the view matrix based on the camera's position.
+	m_Camera->Render();
+
+	// Get the world, view, and projection matrices from the camera and d3d objects.
+	m_D3D->GetWorldMatrix(worldMatrix);
+	m_Camera->GetViewMatrix(viewMatrix);
+	m_D3D->GetProjectionMatrix(projectionMatrix);
+
+	// Translate to where the bath model will be rendered.
+	worldMatrix = XMMatrixTranslation(0.0f, 2.0f, 0.0f);
+
+	// Put the bath model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_Model_bilboard->Render(m_D3D->GetDeviceContext());
+
+	// Render the bath model using the light shader.
+	result = m_RefractionShader->Render(m_D3D->GetDeviceContext(), m_Model_bilboard->GetIndexCount(), worldMatrix, viewMatrix,
+		projectionMatrix, m_Model_bilboard->GetTexture(), m_Light->GetDirection(),
+		m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), clipPlane);
+	if (!result)
+	{
+		return false;
+	}
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_D3D->SetBackBufferRenderTarget();
+
+	return true;
+}
+
+bool GraphicsClass::RenderReflectionToTexture()
+{
+	XMFLOAT4 diffuseColor_G[2], diffuseColor_A[2];
+	XMFLOAT4 lightPosition;
+	XMMATRIX reflectionViewMatrix, projectionMatrix, worldMatrix;
+	bool result;
+
+	diffuseColor_G[0] = m_Light->GetDiffuseColor();
+	diffuseColor_G[1] = m_Light1->GetDiffuseColor();
+
+	diffuseColor_A[0] = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	diffuseColor_A[1] = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+
+	lightPosition = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0);
+
+
+	// Set the render target to be the reflection render to texture.
+	m_ReflectionTexture->SetRenderTarget(m_D3D->GetDeviceContext(), m_D3D->GetDepthStencilView());
+
+	// Clear the reflection render to texture.
+	m_ReflectionTexture->ClearRenderTarget(m_D3D->GetDeviceContext(), m_D3D->GetDepthStencilView(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Use the camera to render the reflection and create a reflection view matrix.
+	m_Camera->RenderReflection(m_waterHeight);
+
+	// Get the camera reflection view matrix instead of the normal view matrix.
+	reflectionViewMatrix = m_Camera->GetReflectionViewMatrix();
+
+	// Get the world and projection matrices from the d3d object.
+	m_D3D->GetWorldMatrix(worldMatrix);
+	m_D3D->GetProjectionMatrix(projectionMatrix);
+
+	// Translate to where the wall model will be rendered.
+	worldMatrix = XMMatrixTranslation(0.0f, 6.0f, 8.0f);
+
+	// Put the wall model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_dolphin->Render(m_D3D->GetDeviceContext());
+
+	// Render the wall model using the light shader and the reflection view matrix.
+	//
+	result=m_LightShader->Render(m_D3D->GetDeviceContext(), m_dolphin->GetIndexCount(), 1,
+		worldMatrix, reflectionViewMatrix, projectionMatrix,
+		m_Model_plane->GetTexture(),
+		m_Light->GetDirection(), m_Light->GetAmbientColor(), diffuseColor_G, lightPosition,
+		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if (!result)
+	{
+		return false;
+	}
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_D3D->SetBackBufferRenderTarget();
+
+	return true;
+}
+
+bool GraphicsClass::RenderScene(float rotation, float rotation_f, float rotation_g, float xpos_f, float ypos_d)
+{
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix, reflectionMatrix;
 	bool result;
 	XMFLOAT4 diffuseColor_G[2], diffuseColor_A[2];
 	XMFLOAT4 lightPosition;
@@ -630,20 +805,20 @@ bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,floa
 		return false;
 	}
 
-	
+
 	// Turn off alpha blending after rendering the text.
 	m_D3D->TurnOffAlphaBlending();
-	
+
 	worldMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 
 	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
 	m_Model_plane->Render(m_D3D->GetDeviceContext());
 
 	// Render the model using the light shader.
-	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_plane->GetIndexCount(), 1, 
+	result = m_LightShader->Render(m_D3D->GetDeviceContext(), m_Model_plane->GetIndexCount(), 1,
 		worldMatrix, viewMatrix, projectionMatrix,
 		m_Model_plane->GetTexture(),
-		m_Light->GetDirection(), m_Light->GetAmbientColor(), diffuseColor_G,lightPosition,
+		m_Light->GetDirection(), m_Light->GetAmbientColor(), diffuseColor_G, lightPosition,
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 
 	if (!result)
@@ -766,12 +941,6 @@ bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,floa
 	{
 		return false;
 	}
-
-	//skybox 
-
-	result = SkymapRender();
-
-
 	//worldMatrix = XMMatrixScaling(2.5f, 2.5f, 2.5f) * XMMatrixRotationY((90.0f + rotation_g) * ((float)XM_PI / 180.0f)) * XMMatrixTranslation(-18.0f, 2.0f, -3.0f);
 
 	//m_Giraf->Render(m_D3D->GetDeviceContext());
@@ -789,62 +958,32 @@ bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,floa
 	//}
 
 	// Present the rendered scene to the screen.
-	m_D3D->EndScene();
 
-	return true;
-}
 
-bool GraphicsClass::TitleRender()
-{
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
-	bool result;
-	
+	  // Get the camera reflection view matrix.
+	reflectionMatrix = m_Camera->GetReflectionViewMatrix();
 
-	// Clear the buffers to begin the scene.
-	m_D3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+	// Translate to where the water model will be rendered.
+	worldMatrix = XMMatrixTranslation(0.0f, m_waterHeight, 0.0f);
 
-	// Generate the view matrix based on the camera's position.
-	m_Camera->Render();
+	// Put the water model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_WaterModel->Render(m_D3D->GetDeviceContext());
 
-	// Get the world, view, and projection matrices from the camera and d3d objects.
-	m_Camera->GetViewMatrix(viewMatrix);
-	m_D3D->GetWorldMatrix(worldMatrix);
-	m_D3D->GetProjectionMatrix(projectionMatrix);
-
-	m_D3D->GetOrthoMatrix(orthoMatrix);
-
-	// Turn off the Z buffer to begin all 2D rendering.
-	m_D3D->TurnZBufferOff();
-
-	// Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
-	result = m_Title->Render(m_D3D->GetDeviceContext(), 0, 0);
+	// Render the water model using the water shader.
+	result = m_WaterShader->Render(m_D3D->GetDeviceContext(), m_WaterModel->GetIndexCount(), worldMatrix, viewMatrix,
+		projectionMatrix, reflectionMatrix, m_ReflectionTexture->GetShaderResourceView(),
+		m_RefractionTexture->GetShaderResourceView(), m_WaterModel->GetTexture(),
+		m_waterTranslation, 0.01f);
 	if (!result)
 	{
 		return false;
 	}
-	viewMatrix = m_baseViewMatrix;
-	//수정된 부분
-	result = m_TextureShader->Render(m_D3D->GetDeviceContext(), m_Title->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix, m_Title->GetTexture());
-	if (!result)
-	{
-		return false;
-	}
-	// Render the bitmap with the texture shader.
-	 
+
 	// Present the rendered scene to the screen.
-	m_D3D->EndScene();
+
+
 
 	return true;
-}
-
-bool GraphicsClass::RenderRefractionToTexture()
-{
-	return false;
-}
-
-bool GraphicsClass::RenderReflectionToTexture()
-{
-	return false;
 }
 
 bool GraphicsClass::SkymapRender() 

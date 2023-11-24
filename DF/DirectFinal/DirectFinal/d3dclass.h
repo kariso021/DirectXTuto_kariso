@@ -55,6 +55,9 @@ public:
 	void TurnOnAlphaBlending();
 	void TurnOffAlphaBlending();
 
+	ID3D11DepthStencilView* GetDepthStencilView();
+	void SetBackBufferRenderTarget();
+
 private:
 	bool m_vsync_enabled;
 	int m_videoCardMemory;
@@ -76,6 +79,9 @@ private:
 	ID3D11BlendState* m_alphaEnableBlendingState;
 	ID3D11BlendState* m_alphaDisableBlendingState;
 	//skymap
+
+	//
+
 };
 
 #endif

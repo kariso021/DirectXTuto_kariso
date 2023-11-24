@@ -54,6 +54,7 @@ private:
 
 	bool RenderRefractionToTexture();
 	bool RenderReflectionToTexture();
+	bool RenderScene(float rotation, float rotation_f, float rotation_g, float xpos_f, float ypos_d);
 
 	bool SkymapRender();
 

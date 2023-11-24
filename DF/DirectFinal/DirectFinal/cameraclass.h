@@ -39,12 +39,16 @@ public:
 	void Render();
 	void GetViewMatrix(XMMATRIX&);
 
+	void RenderReflection(float);
+	XMMATRIX GetReflectionViewMatrix();
+
 private:
 	float moveLR;
 	float moveBF;
 	XMFLOAT3 m_position;
 	XMFLOAT3 m_rotation;
 	XMMATRIX m_viewMatrix;
+	XMMATRIX m_reflectionViewMatrix;
 };
 
 #endif
