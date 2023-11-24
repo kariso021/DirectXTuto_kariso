@@ -27,7 +27,7 @@ bool RefractionShaderClass::Initialize(ID3D11Device* device, HWND hwnd)
 {
     bool result;
     // Initialize the vertex and pixel shaders.
-    result = InitializeShader(device, hwnd, L"../Engine/refraction.vs", L"../Engine/refraction.ps");
+    result = InitializeShader(device, hwnd, L"./data/Refraction.vs", L"./data/Refraction.ps");
     if (!result)
     {
         return false;

@@ -32,7 +32,7 @@ bool WaterShaderClass::Initialize(ID3D11Device* device, HWND hwnd)
     bool result;
 
     // Initialize the vertex and pixel shaders.
-    result = InitializeShader(device, hwnd, L"./water.vs", L"./water.ps");
+    result = InitializeShader(device, hwnd, L"./data/Water.vs", L"./data/Water.ps");
     if (!result)
     {
         return false;

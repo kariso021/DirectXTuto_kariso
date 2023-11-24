@@ -35,6 +35,7 @@
     <ClInclude Include="lightshaderclass.h" />
     <ClInclude Include="modelclass.h" />
     <ClInclude Include="Refractionshaderclass.h" />
+    <ClInclude Include="Rendertextureclass.h" />
     <ClInclude Include="skymapclass.h" />
     <ClInclude Include="soundclass.h" />
     <ClInclude Include="systemclass.h" />
@@ -61,6 +62,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="modelclass.cpp" />
     <ClCompile Include="Refractionshaderclass.cpp" />
+    <ClCompile Include="Rendertextureclass.cpp" />
     <ClCompile Include="skymapclass.cpp" />
     <ClCompile Include="soundclass.cpp" />
     <ClCompile Include="systemclass.cpp" />

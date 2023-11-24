@@ -20,6 +20,7 @@
 #include "skymapclass.h"
 #include "Refractionshaderclass.h"
 #include "Watershaderclass.h"
+#include "Rendertextureclass.h"
 
 /////////////
 // GLOBALS //
@@ -49,7 +50,10 @@ public:
 
 private:
 	bool Render(float,float,float,float,float);
-	bool MainRender();
+	bool TitleRender();
+
+	bool RenderRefractionToTexture();
+	bool RenderReflectionToTexture();
 
 	bool SkymapRender();
 
@@ -70,6 +74,7 @@ private:
 	//물 반사 및 물 쉐이더
 	RefractionShaderClass* m_RefractionShader;
 	WaterShaderClass* m_WaterShader;
+	RenderTextureClass* m_RefractionTexture, * m_ReflectionTexture;
 
 
 	//물의 높이와 위치

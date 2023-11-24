@@ -18,15 +18,21 @@ GraphicsClass::GraphicsClass()
 	m_dolphin = 0;
 	m_Giraf = 0;
 	m_Skymap = 0;
+	m_WaterModel = 0;
 	
 
 	m_LightShader = 0;
 	m_Light = 0;
 	m_Light1 = 0;
+	m_WaterShader = 0;
 
 	m_TextureShader = 0;
 	//m_Bitmap = 0;
 	m_Title = 0;
+
+	m_RefractionShader = 0;
+	m_ReflectionTexture = 0;
+	m_RefractionTexture = 0;
 
 	m_Text = 0;
 }
@@ -73,6 +79,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 //	m_Camera->SetPosition(0.0f, 0.5f, -3.0f);	// for chair
 
 	// Create the model object.
+	m_WaterModel = new ModelClass;
 	m_Model_bilboard = new ModelClass;
 	m_Model_plane = new ModelClass;
 	//m_Tree = new ModelClass;
@@ -96,6 +103,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Chess->Initialize(m_D3D->GetDevice(), L"./data/chess.obj", L"./data/04bizontexture.dds");
 	m_dolphin->Initialize(m_D3D->GetDevice(), L"./data/dolphin.obj", L"./data/dolphin.dds");
 	//m_Giraf->Initialize(m_D3D->GetDevice(), L"./data/giraf.obj", L"./data/18giraftexture.dds");
+	m_WaterModel->Initialize(m_D3D->GetDevice(), L"./data/cube.obj", L"./data/Water.dds");
 
 
 	if (!result)
@@ -217,8 +225,80 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
+	//Create Water Obj Referation
+
+	 // Create the refraction render to texture object.
+	m_RefractionTexture = new RenderTextureClass;
+	if (!m_RefractionTexture)
+	{
+		return false;
+	}
+
+	// Initialize the refraction render to texture object.
+	result = m_RefractionTexture->Initialize(m_D3D->GetDevice(), screenWidth, screenHeight);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the refraction render to texture object.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create the reflection render to texture object.
+	m_ReflectionTexture = new RenderTextureClass;
+	if (!m_ReflectionTexture)
+	{
+		return false;
+	}
+
+	// Initialize the reflection render to texture object.
+	result = m_ReflectionTexture->Initialize(m_D3D->GetDevice(), screenWidth, screenHeight);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the reflection render to texture object.", L"Error", MB_OK);
+		return false;
+	}
+	
+	m_RefractionShader = new RefractionShaderClass;
+	if (!m_RefractionShader)
+	{
+		return false;
+	}
+
+	// Initialize the refraction shader object.
+	result = m_RefractionShader->Initialize(m_D3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the refraction shader object.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create the water shader object.
+	m_WaterShader = new WaterShaderClass;
+	if (!m_WaterShader)
+	{
+		return false;
+	}
+
+	// Initialize the water shader object.
+	result = m_WaterShader->Initialize(m_D3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the water shader object.", L"Error", MB_OK);
+		return false;
+	}
+
+
+	// Set the height of the water.
+	m_waterHeight = 2.75f;
+
+	// Initialize the position of the water.
+	m_waterTranslation = 0.0f;
+
+
+
 
 	return true;
+
+
 }
 
 CameraClass* GraphicsClass::Getcamera()
@@ -318,6 +398,43 @@ void GraphicsClass::Shutdown()
 		delete m_TextureShader;
 		m_TextureShader = 0;
 	}
+	//For Water
+	if (m_WaterModel)
+	{
+		m_WaterModel->Shutdown();
+		delete m_WaterModel;
+		m_WaterModel = 0;
+	}
+
+	if (m_WaterShader)
+	{
+		m_WaterShader->Shutdown();
+		delete m_WaterShader;
+		m_WaterShader = 0;
+	}
+
+	if (m_RefractionTexture)
+	{
+		m_RefractionTexture->Shutdown();
+		delete m_RefractionTexture;
+		m_RefractionTexture = 0;
+	}
+
+	if (m_ReflectionTexture)
+	{
+		m_ReflectionTexture->Shutdown();
+		delete m_ReflectionTexture;
+		m_ReflectionTexture = 0;
+	}
+
+	if (m_RefractionShader)
+	{
+		m_RefractionShader->Shutdown();
+		delete m_RefractionShader;
+		m_RefractionShader = 0;
+	}
+
+
 
 	return;
 }
@@ -386,6 +503,13 @@ bool GraphicsClass::Frame(int fps, int cpu, int mouseX, int mouseY, bool Main)
 		increase -= 360.0f;
 	}
 
+	//Water 의 움직임
+	m_waterTranslation += 0.001f;
+	if (m_waterTranslation > 1.0f)
+	{
+		m_waterTranslation -= 1.0f;
+	}
+
 	// Set the frames per second.
 	result = m_Text->SetFPS(fps, m_D3D->GetDeviceContext());
 	if (!result)
@@ -415,7 +539,7 @@ bool GraphicsClass::Frame(int fps, int cpu, int mouseX, int mouseY, bool Main)
 
 	if (Main == TRUE) {
 		// Render the graphics scene.
-		result = MainRender();
+		result = TitleRender();
 		if (!result)
 		{
 			return false;
@@ -670,7 +794,7 @@ bool GraphicsClass::Render(float rotation,float rotation_f,float rotation_g,floa
 	return true;
 }
 
-bool GraphicsClass::MainRender()
+bool GraphicsClass::TitleRender()
 {
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
 	bool result;
@@ -711,6 +835,16 @@ bool GraphicsClass::MainRender()
 	m_D3D->EndScene();
 
 	return true;
+}
+
+bool GraphicsClass::RenderRefractionToTexture()
+{
+	return false;
+}
+
+bool GraphicsClass::RenderReflectionToTexture()
+{
+	return false;
 }
 
 bool GraphicsClass::SkymapRender() 
