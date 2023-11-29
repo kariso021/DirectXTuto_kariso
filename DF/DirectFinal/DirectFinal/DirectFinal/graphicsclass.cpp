@@ -95,7 +95,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model_bilboard->Initialize(m_D3D->GetDevice(), L"./data/clock.obj", L"./data/Clock.dds");
+	result = m_Model_bilboard->Initialize(m_D3D->GetDevice(), L"./data/Clock2.obj", L"./data/Clock2.dds");
 	m_Model_plane->Initialize(m_D3D->GetDevice(), L"./data/plane.obj", L"./data/floor.dds");
 	/*m_Tree->Initialize(m_D3D->GetDevice(), L"./data/tree.obj", L"./data/Spooky1Twig_Diffuse4.dds");*/
 	//m_Fox->Initialize(m_D3D->GetDevice(), L"./data/fox.obj", L"./data/01foxtexture.dds");
@@ -474,7 +474,7 @@ bool GraphicsClass::Frame(int fps, int cpu, int mouseX, int mouseY, bool Main)
 
 	if (rotation_f < -80.0f) {
 		xpos_f += 0.08f;
-		if (xpos_f > 10.0f) {
+		if (xpos_f > 6.0f) {
 			rotation_f = 90.0f;
 		}
 	}
@@ -836,7 +836,7 @@ bool GraphicsClass::RenderScene(float rotation, float rotation_f, float rotation
 	// 회전각도를 라디안으로 변환합니다.
 	rotationX = (float)angle * 0.0174532925f;
 
-	worldMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationY(rotationX) * XMMatrixTranslation(modelPosition.x, modelPosition.y, modelPosition.z) * XMMatrixTranslation(7.0f, 8.0f + xpos_f / 2.0f, 0.0f);
+	worldMatrix = XMMatrixScaling(2.5f, 2.5f, 2.5f) * XMMatrixRotationY(rotationX) * XMMatrixTranslation(modelPosition.x, modelPosition.y, modelPosition.z) * XMMatrixTranslation(6.3f, 8.0f + xpos_f / 2.0f, 1.0f);
 
 	m_Model_bilboard->Render(m_D3D->GetDeviceContext());
 
@@ -905,7 +905,7 @@ bool GraphicsClass::RenderScene(float rotation, float rotation_f, float rotation
 	//	return false;
 	//}
 
-	worldMatrix = XMMatrixScaling(2.5f, 2.5f, 2.5f) * XMMatrixRotationY(-130.0f * ((float)XM_PI / 180.0f)) * XMMatrixTranslation(7.0f, 2.0f, 0.0f);
+	worldMatrix = XMMatrixScaling(2.5f, 2.5f, 2.5f) * XMMatrixRotationY(-130.0f * ((float)XM_PI / 180.0f)) * XMMatrixTranslation(6.0f, 2.0f, 0.0f);
 
 	m_Chess->Render(m_D3D->GetDeviceContext());
 
